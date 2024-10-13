@@ -5,6 +5,12 @@ const MejaRegistrasiSchema = new mongoose.Schema(
         name: {
             type: String,
         },
+        code: {
+            type: String,
+        },
+        kuota: {
+            type: Number,
+        },
         tersedia: {
             type: String,
             default: true

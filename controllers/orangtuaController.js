@@ -281,24 +281,24 @@ export const showStats = async (req, res) => {
 
 export const importDataOrtu = async (req, res) => {
     try {
-
         const filePath = path.join(process.cwd(), req.file.path);
         const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-        let cleanData = {}
+        let cleanData = {};
         data.forEach(async (item) => {
-            let prodi = item.Program_Studi.replace("-", "").replace(/\s+/g, " ").trim().toUpperCase();
+            let prodi = item.Program_Studi.replace("-", "")
+                // .replace(/\s+/g, " ")
+                .trim()
+                .toUpperCase();
+            let nama = item.Nama.toUpperCase();
 
-
-            const orangtua = new OrangtuaModel(
-                {
-                    name: item.Nama,
-                    prodi: prodi,
-                    noKursi: item.No_Kursi
-                }
-            );
+            const orangtua = new OrangtuaModel({
+                name: nama,
+                prodi: prodi,
+                noKursi: item.No_Kursi,
+            });
             try {
                 await orangtua.save();
                 console.log(`Data orangtua ${orangtua.name} berhasil disimpan.`);
@@ -306,6 +306,7 @@ export const importDataOrtu = async (req, res) => {
                 console.error(`Gagal menyimpan data orangtua: ${error.message}`);
             }
         });
+
 
         // for (const item of data) {
         //     const inputSeatNumber = item.No_kursi;
@@ -344,75 +345,81 @@ export const importDataOrtu = async (req, res) => {
     }
 };
 
+
 export const exportPdfDataOrtu = async (req, res) => {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    try {
-        const { data } = await getExportOrtu(req, res);
+};
 
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-        // Menentukan path file PDF yang akan disimpan ke folder public
-        const filePath = path.join(__dirname, '../public/exports', 'orangtua.pdf');
 
-        // Buat stream untuk menyimpan file PDF
-        const writeStream = fs.createWriteStream(filePath);
+// export const exportPdfDataOrtu = async (req, res) => {
+//     const __filename = fileURLToPath(import.meta.url);
+//     const __dirname = path.dirname(__filename);
+//     try {
+//         const { data } = await getExportOrtu(req, res);
 
-        // Piping PDF ke file
-        doc.pipe(writeStream);
+//         const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-        // Isi konten PDF
-        doc.fontSize(12).text('Data Orangtua', { align: 'center' });
+//         // Menentukan path file PDF yang akan disimpan ke folder public
+//         const filePath = path.join(__dirname, '../public/exports', 'orangtua.pdf');
 
-        data.forEach((orangtua, i) => {
-            // Estimasi tinggi data dan QR code
-            const dataHeight = 100;
+//         // Buat stream untuk menyimpan file PDF
+//         const writeStream = fs.createWriteStream(filePath);
 
-            // Cek apakah ruang cukup di halaman saat ini
-            if (doc.y + dataHeight > doc.page.height - doc.page.margins.bottom) {
-                doc.addPage();
-            }
+//         // Piping PDF ke file
+//         doc.pipe(writeStream);
 
-            doc.moveDown();
-            doc.fontSize(10)
-                .text(`No: ${orangtua.number}`, 50)
-                .text(`Nama: ${orangtua.name}`, 50)
-                .text(`Prodi: ${orangtua.prodi}`, 50)
-                .text(`No Kursi: ${orangtua.noKursi}`, 50, doc.y)
-            doc.image(orangtua.qr_code, doc.page.width - 150, doc.y - 54, {
-                fit: [100, 100],
-                align: 'right',
-                valign: 'center'
-            });
+//         // Isi konten PDF
+//         doc.fontSize(12).text('Data Orangtua', { align: 'center' });
 
-            doc.moveDown(4);
-            doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke();
-            // doc.moveDown(2);
-        });
+//         data.forEach((orangtua, i) => {
+//             // Estimasi tinggi data dan QR code
+//             const dataHeight = 100;
 
-        // Selesaikan dokumen PDF
-        doc.end();
+//             // Cek apakah ruang cukup di halaman saat ini
+//             if (doc.y + dataHeight > doc.page.height - doc.page.margins.bottom) {
+//                 doc.addPage();
+//             }
 
-        // Tunggu sampai proses penulisan selesai
-        writeStream.on('finish', () => {
-            console.log('PDF generated successfully!');
-            res.sendFile(filePath, (err) => {
-                if (err) {
-                    console.error('Error sending file:', err);
-                    console.log(err);
-                } else {
+//             doc.moveDown();
+//             doc.fontSize(10)
+//                 .text(`No: ${orangtua.number}`, 50)
+//                 .text(`Nama: ${orangtua.name}`, 50)
+//                 .text(`Prodi: ${orangtua.prodi}`, 50)
+//                 .text(`No Kursi: ${orangtua.noKursi}`, 50, doc.y)
+//             doc.image(orangtua.qr_code, doc.page.width - 150, doc.y - 54, {
+//                 fit: [100, 100],
+//                 align: 'right',
+//                 valign: 'center'
+//             });
 
-                    fs.unlinkSync(filePath);
-                    console.log('PDF file deleted after sending.');
-                }
-            })
-        });
+//             doc.moveDown(4);
+//             doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke();
+//             // doc.moveDown(2);
+//         });
 
-    } catch (error) {
+//         // Selesaikan dokumen PDF
+//         doc.end();
 
-        res.status(500).json({ message: 'Error generating PDF', error: error.message });
-    }
-}
+//         // Tunggu sampai proses penulisan selesai
+//         writeStream.on('finish', () => {
+//             console.log('PDF generated successfully!');
+//             res.sendFile(filePath, (err) => {
+//                 if (err) {
+//                     console.error('Error sending file:', err);
+//                     console.log(err);
+//                 } else {
+
+//                     fs.unlinkSync(filePath);
+//                     console.log('PDF file deleted after sending.');
+//                 }
+//             })
+//         });
+
+//     } catch (error) {
+
+//         res.status(500).json({ message: 'Error generating PDF', error: error.message });
+//     }
+// }
 
 // export const exportPdfDataOrtu = async (req, res) => {
 //     try {

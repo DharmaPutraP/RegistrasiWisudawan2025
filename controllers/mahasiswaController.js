@@ -7,7 +7,6 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { PRODI } from '../utils/constants.js';
-import { register } from 'module';
 
 export const getAllMahasiswas = async (req, res) => {
     const { search, jurusan, prodi, isRegis, sort } = req.query;
@@ -295,18 +294,15 @@ export const getExportMhs = async (req, res) => {
 };
 
 export const importDataMhs = async (req, res) => {
-    // console.log("aa");
-
-    // return
     try {
 
         const filePath = path.join(process.cwd(), req.file.path);
         const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
+        let jurusan = ""
         for (const item of data) {
-            const inputSeatNumber = item.No_kursi;
+            const inputSeatNumber = item.noKursi;
             let formattedSeatNumber;
             if (inputSeatNumber && inputSeatNumber.includes('.')) {
                 const [letterPart, numberPart] = inputSeatNumber.split('.');
@@ -314,17 +310,31 @@ export const importDataMhs = async (req, res) => {
                 formattedSeatNumber = letterPart + '.' + formattedNumberPart;
             } else {
                 console.error('Nomor kursi tidak valid.');
-                continue; // Lewati item ini jika nomor kursi tidak valid
+                continue; 
+            }
+
+            let prodi = item.prodi.replace("-", "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toUpperCase();
+
+            if (item.jurusan === "Akuntansi Perpajakan") {
+                jurusan = item.jurusan.replace("Akuntansi Perpajakan", "AKTP")
+            }else if (item.jurusan === "Teknik Industri") {
+                jurusan = item.jurusan.replace("Teknik Industri", "JTIN")
+            }else if(item.jurusan === "Teknologi Informasi") {
+                jurusan = item.jurusan.replace("Teknologi Informasi", "JTI")
+            }else{
+                console.log("jurusan tidak ditemukan");
             }
 
             const mahasiswa = new Mahasiswa({
-                nim: item.NIM,
-                name: item.Nama,
-                nik: item.NIK,
-                noIjazah: item.Nomor_Ijazah,
-                prodi: item.Program_Studi,
-                jurusan: item.Jurusan,
-                ipk: item.IPK,
+                nim: item.nim,
+                name: item.name,
+                noIjazah: item.noIjazah,
+                prodi: prodi,
+                jurusan: jurusan,
+                ipk: item.ipk,
                 noKursi: formattedSeatNumber
             });
 
