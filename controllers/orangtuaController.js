@@ -4,7 +4,7 @@ import qrcode from 'qrcode';
 import OrangtuaModel from "../models/OrangtuaModel.js";
 import path from 'path';
 import XLSX from 'xlsx';
-import PDFDocument from 'pdfkit';
+// import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { PRODI } from "../utils/constants.js";
