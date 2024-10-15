@@ -8,6 +8,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { PRODI } from "../utils/constants.js";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 
 export const getAllOrangtua = async (req, res) => {
