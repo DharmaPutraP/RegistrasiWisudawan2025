@@ -347,6 +347,114 @@ export const importDataOrtu = async (req, res) => {
 
 
 export const exportPdfDataOrtu = async (req, res) => {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Ambil data tamu
+    const { data } = await getExportOrtu(req, res);
+
+    // Konversi cm ke pt (1 cm = 28.35 pt)
+    const cmToPt = (cm) => cm * 28.35;
+
+    // Ukuran halaman custom
+    const pageWidth = cmToPt(20.4); // Lebar halaman custom
+    const pageHeight = cmToPt(16.5); // Tinggi halaman custom
+
+    // Pengaturan ukuran dan jarak label
+    const labelWidth = cmToPt(6.4); // Lebar label
+    const labelHeight = cmToPt(3.2); // Tinggi label
+    const horizontalPitch = cmToPt(6.8); // Jarak horizontal antar label
+    const verticalPitch = cmToPt(3.8); // Jarak vertikal antar label
+    const topMargin = cmToPt(0.9); // Margin atas
+    const sideMargin = cmToPt(0.2); // Margin samping
+
+    // Buat dokumen PDF baru
+    const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontSize = 10;
+    const maxWidthForText = labelWidth - 70; // Ruang untuk teks sebelum mencapai batas label
+
+    let x = sideMargin;
+    let y = pageHeight - topMargin - labelHeight; // Awal di margin atas
+
+    let page = pdfDoc.addPage([pageWidth, pageHeight]);
+
+    // Fungsi untuk memecah teks menjadi beberapa baris jika terlalu panjang
+    const splitTextToLines = (text, maxWidth, fontSize, font) => {
+        const words = text.split(" ");
+        let lines = [];
+        let currentLine = "";
+
+        for (const word of words) {
+            const lineWithWord = currentLine ? `${currentLine} ${word}` : word;
+            const textWidth = font.widthOfTextAtSize(lineWithWord, fontSize);
+
+            if (textWidth <= maxWidth) {
+                currentLine = lineWithWord;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+
+        lines.push(currentLine); // Masukkan sisa kata ke dalam baris terakhir
+        return lines;
+    };
+
+    for (const t of data) {
+        // Ambil QR code dari base64
+        const qrCodeData = t.qr_code.split(",")[1];
+        const qrImage = await pdfDoc.embedPng(Buffer.from(qrCodeData, "base64"));
+
+        // Tambah QR code di sebelah kiri nama
+        page.drawImage(qrImage, {
+            x: x + 10, // Posisi QR di sebelah kiri label
+            y: y + labelHeight / 2 - 25, // Tengah label secara vertikal
+            width: 50,
+            height: 50,
+        });
+
+        // Jika nama tamu terlalu panjang, pecah jadi beberapa baris
+        const lines = splitTextToLines(t.name, maxWidthForText, fontSize, font);
+
+        let textY = y + labelHeight / 2 + (lines.length - 1) * 5; // 10 Penyesuaian agar teks berada di tengah label
+
+        // Posisikan nama di sebelah kanan QR code
+        for (const line of lines) {
+            page.drawText(line, {
+                x: x + 65, // Posisikan teks di sebelah kanan QR code
+                y: textY, // Posisikan baris saat ini
+                size: fontSize,
+                font,
+                color: rgb(0, 0, 0),
+            });
+            textY -= 15; // Geser ke bawah untuk baris berikutnya
+        }
+
+        // Geser ke posisi label berikutnya di horizontal
+        x += horizontalPitch;
+
+        // Jika sudah sampai di akhir baris (3 label per baris), pindah ke bawah (baris berikutnya)
+        if (x + labelWidth > pageWidth - sideMargin) {
+            x = sideMargin; // Reset ke awal
+            y -= verticalPitch; // Pindah ke bawah
+        }
+
+        // Jika halaman sudah penuh (4 baris), buat halaman baru
+        if (y < topMargin) {
+            page = pdfDoc.addPage([pageWidth, pageHeight]);
+            x = sideMargin;
+            y = pageHeight - topMargin - labelHeight;
+        }
+    }
+
+    // Simpan PDF ke buffer
+    const pdfBytes = await pdfDoc.save();
+
+    // Kirim PDF sebagai response
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=undangan.pdf");
+    res.send(Buffer.from(pdfBytes));
 };
 
 
