@@ -542,3 +542,12 @@ button:disabled {
   padding: 1rem 0.5rem 1rem;
   border-radius: 5px;
 }
+
+.displayName {
+  color: #3955af;             /* Teks berwarna putih */
+  padding: 10px;            /* Ruang antara teks dan border */
+  border-radius: 5px;       /* Membuat sudut sedikit melengkung */
+  display: inline-block;    /* Agar border mengelilingi teks */
+  font-size: 1.2rem;        /* Ukuran teks sedikit lebih besar */
+  font-weight: bold;        /* Teks lebih tebal */
+}

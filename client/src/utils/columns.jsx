@@ -141,13 +141,16 @@ export const getOrangtuaColumns = (navigate) => [
   },
   {
     name: "Registrasi",
-    cell: (row) =>
-      row.isRegis ? (
+    cell: (row) => {
+      const mejaId = localStorage.getItem("tableId");
+      console.log(mejaId);
+      
+      return row.isRegis ? (
         <button
           className="btn regis-btn"
           onClick={() =>
             Registered(
-              `/orangtua/sudah/${row._id}`,
+              `/orangtua/sudah/${row._id}/${mejaId}`,
               navigate,
               "orangtua",
               "register"
@@ -161,7 +164,7 @@ export const getOrangtuaColumns = (navigate) => [
           className="btn unregis-btn"
           onClick={() =>
             Registered(
-              `/orangtua/sudah/${row._id}`,
+              `/orangtua/sudah/${row._id}/${mejaId}`,
               navigate,
               "orangtua",
               "unregister"
@@ -170,7 +173,8 @@ export const getOrangtuaColumns = (navigate) => [
         >
           <IoCloseCircle size={17} />
         </div>
-      ),
+      );
+    },
     width: "5.5rem",
   },
   {

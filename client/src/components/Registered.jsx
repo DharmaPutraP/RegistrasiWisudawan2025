@@ -48,16 +48,20 @@ const registered = async (linkUrl, navigate, url, status) => {
       try {
         await customFetch.patch(linkUrl);
         navigate(`/dashboard/${url}`);
+        Swal.fire({
+          title: textStatus,
+          text: textSucces,
+          icon: "success",
+        });
       } catch (error) {
-        toast.error(error?.response?.data?.msg);
+        const errorMessage =
+          error?.response?.data?.message || "Terjadi kesalahan saat registrasi.";
+        toast.error(errorMessage);
       }
-
-      Swal.fire({
-        title: textStatus,
-        text: textSucces,
-        icon: "success",
-      });
     }
+  })
+  .catch((error) => {
+    toast.error(error?.message || "Terjadi kesalahan yang tidak terduga.");
   });
 };
 

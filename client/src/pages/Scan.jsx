@@ -65,9 +65,16 @@ const Scan = () => {
   const registerUser = async (id, mejaId) => {
     try {
       const { data } = await customFetch.patch(`/scan/${id}`, { mejaId });
+      const userRegisterData = await fetchDataById(decodedText);
+      setLoadedData(userRegisterData);
+      setShowData(true);
+      toast.success("Berhasil Registrasi");
+      // new Audio(Yay).play();
+      setTimeout(() => setShowData(false), 4000);
       return data;
     } catch (error) {
-      toast.error(error.response?.data?.msg || "Terjadi kesalahan");
+      new Audio(Fail).play();
+      toast.error(error.response?.data?.message || "Terjadi kesalahan");
     }
   };
 
@@ -119,18 +126,13 @@ const Scan = () => {
         ) {
           await registerUser(decodedText, selectedMeja);
           toast.success("Anda berhasil mengambil konsumsi!");
-          new Audio(Yay).play();
+          // new Audio(Yay).play();
         } else if (isRegis) {
           toast.error("Anda telah melakukan registrasi!");
           new Audio(Fail).play();
         } else {
           await registerUser(decodedText, selectedMeja);
-          const userRegisterData = await fetchDataById(decodedText);
-          setLoadedData(userRegisterData);
-          setShowData(true);
-          toast.success("Berhasil Registrasi");
-          new Audio(Yay).play();
-          setTimeout(() => setShowData(false), 4000);
+         
         }
       } else {
         toast.error("Registrasi ditutup!");

@@ -9,6 +9,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { PRODI } from "../utils/constants.js";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import MejaRegistrasiModel from "../models/MejaRegistrasiModel.js";
 
 
 export const getAllOrangtua = async (req, res) => {
@@ -156,9 +157,96 @@ export const updateOrangtuaRegister = async (req, res) => {
             isRegis = false;
         }
 
-        const updatedOrangtua = await Orangtua.findByIdAndUpdate(req.params.id, { isRegis: isRegis, isRegisBy: req.user.userId }, {
-            new: true,
-        });
+        console.log(req.params);
+        const mejaId = req.params.mejaId
+        const getPintu = await MejaRegistrasiModel.findById(mejaId);
+
+        if (!getPintu) {
+            return res.status(404).json({ message : "Meja tidak ditemukan."});
+        }
+
+        const orangtua = await Orangtua.findById(req.params.id);
+
+        if (!orangtua) {
+            return res.status(404).json({ message : "Orangtua tidak ditemukan."});
+        }
+
+        let setPintu = orangtua.noKursi;
+
+        if (!orangtua.noKursi) {
+            if (getPintu.kuota > 0) {
+                const noKursiTerakhirOrangtua = await Orangtua.find({
+                    $and: [
+                        { noKursi: { $exists: true } },
+                        { noKursi: { $regex: `^${getPintu.code}` } },
+                    ],
+                })
+                    .sort({ noKursi: -1 })
+                    .limit(1);
+
+                if (noKursiTerakhirOrangtua.length > 0) {
+                    let hasil = noKursiTerakhirOrangtua[0].noKursi.slice(2);
+                    setPintu = `${getPintu.code}${parseInt(hasil) + 1}`;
+                } else {
+                    setPintu = `${getPintu.code}1`;
+                }
+
+                await MejaRegistrasiModel.findByIdAndUpdate(
+                    mejaId,
+                    { $inc: { kuota: -1 } },
+                    { new: true }
+                );
+
+            } else {
+                const getAllPintu = await MejaRegistrasiModel.find({
+                    kuota: { $gt: 0 },
+                })
+                    .sort({ code: 1 })
+                    .limit(1);
+
+                if (getAllPintu.length > 0) {
+                    const noKursiTerakhirBaru = await Orangtua.find({
+                        $and: [
+                            { noKursi: { $exists: true } },
+                            { noKursi: { $regex: `^${getAllPintu[0].code}` } },
+                        ],
+                    })
+                        .sort({ noKursi: -1 })
+                        .limit(1);
+
+                    if (noKursiTerakhirBaru.length > 0) {
+                        let hasilBaru = noKursiTerakhirBaru[0].noKursi.slice(2);
+                        setPintu = `${getAllPintu[0].code}${parseInt(hasilBaru) + 1}`;
+                    } else {
+                        setPintu = `${getAllPintu[0].code}1`;
+                    }
+
+                    // Update kuota di meja baru
+                    await MejaRegistrasiModel.findByIdAndUpdate(getAllPintu[0]._id, {
+                        $inc: { kuota: -1 },
+                    });
+                } else {
+                    return res.status(400).json({ message: "Semua meja sudah penuh." });
+                }
+            }
+        }
+
+        const updatedOrangtua = await Orangtua.findByIdAndUpdate(
+            req.params.id,
+            {
+                isRegis: true,
+                noKursi: setPintu,
+                isRegisBy: req.user.userId,
+            },
+            { new: true }
+        );
+
+
+        // return
+
+        // const updatedOrangtua = await Orangtua.findByIdAndUpdate(req.params.id, { isRegis: isRegis, isRegisBy: req.user.userId }, {
+        //     new: true,
+        // });
         res.status(StatusCodes.OK).json({ msg: 'Orangtua Registered modified', orangtua: updatedOrangtua });
     } catch (error) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message });

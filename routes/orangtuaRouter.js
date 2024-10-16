@@ -39,13 +39,14 @@ router
   .patch(updateOrangtua)
   .delete(deleteOrangtua);
 
-router
-  .route("/sudah/:id")
-  .get(getOrangtua)
-  .patch(authorizedPermissions("superadmin", "admin"), updateOrangtuaRegister);
-
-router
+  
+  router
   .route("/konsumsi/:id")
   .patch(authorizedPermissions("superadmin", "admin"), updateOrangtuaKonsumsi);
+  
+  router
+    .route("/sudah/:id/:mejaId")
+    .get(getOrangtua)
+    .patch(authorizedPermissions("superadmin", "admin"), updateOrangtuaRegister);
 
-export default router;
+    export default router;

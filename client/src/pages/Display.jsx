@@ -35,7 +35,7 @@ const Display = () => {
       setShowDisplay(true);
       setTimeout(() => {
         setShowDisplay(false);
-      }, 4000);
+      }, 6000);
 
       console.log(data);
     });
@@ -82,7 +82,12 @@ const Display = () => {
           <img src={VectorRight} className="right-vector" alt="Right Vector" />
         </div>
         {showDisplay && dataScan && (
+          <>
+          <p className="displayName">Orang Tua</p>
           <p className="displayName">{formatName(dataScan.data.name)}</p>
+          <br />
+          <p className="displayName">No Kursi anda : {dataScan.data?.noKursi}</p>
+          </>
         )}
         {/* <p className="displayName">Dharma Putra Prataam</p> */}
       </div>

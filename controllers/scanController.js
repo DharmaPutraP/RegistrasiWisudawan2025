@@ -3,7 +3,6 @@ import Orangtua from "../models/OrangtuaModel.js";
 import { StatusCodes } from "http-status-codes";
 import { triggerPusher } from '../utils/triggerPusher.js';
 import MejaRegistrasiModel from '../models/MejaRegistrasiModel.js';
-import { get } from 'https';
 import mongoose, { set } from 'mongoose';
 
 export const updateScan = async (req, res) => {
@@ -25,49 +24,56 @@ export const updateScan = async (req, res) => {
             const getPintu = await MejaRegistrasiModel.findById(req.body.mejaId);
 
             if (!getPintu) {
-                return res.status(404).send('Meja tidak ditemukan.');
+                return res.status(404).json({message : "Meja tidak ditemukan."});
             }
 
             const orangtua = await Orangtua.findById(req.params.id);
 
             if (!orangtua) {
-                return res.status(404).send('Orangtua tidak ditemukan.');
+                return res.status(404).json({message : "Orangtua tidak ditemukan."});
             }
 
             let setPintu = orangtua.noKursi;
 
             if (!orangtua.noKursi) {
-                const noKursiTerakhirOrangtua = await Orangtua.find({
-                    $and: [
-                        { noKursi: { $exists: true } },
-                        { noKursi: { $regex: `^${getPintu.code}` } }
-                    ]
-                }).sort({ noKursi: -1 }).limit(1);
+                if (getPintu.kuota > 0) {
+                    const noKursiTerakhirOrangtua = await Orangtua.find({
+                        $and: [
+                            { noKursi: { $exists: true } },
+                            { noKursi: { $regex: `^${getPintu.code}`} },
+                        ],
+                    })
+                        .sort({ noKursi: -1 })
+                        .limit(1);
 
-                if (noKursiTerakhirOrangtua.length > 0) {
-                    let hasil = noKursiTerakhirOrangtua[0].noKursi.slice(2);
-                    setPintu = `${getPintu.code}${parseInt(hasil) + 1}`;
+                    if (noKursiTerakhirOrangtua.length > 0) {
+                        let hasil = noKursiTerakhirOrangtua[0].noKursi.slice(2);
+                        setPintu = `${getPintu.code}${parseInt(hasil) + 1}`;
+                    } else {
+                        setPintu = `${getPintu.code}1`;
+                    }
+
+                    await MejaRegistrasiModel.findByIdAndUpdate(
+                        req.body.mejaId,
+                        { $inc: { kuota: -1 } },
+                        { new: true }
+                    );
                 } else {
-                    setPintu = `${getPintu.code}1`;
-                }
-
-                let updatedPintu = await MejaRegistrasiModel.findByIdAndUpdate(
-                    req.body.mejaId,
-                    { $inc: { kuota: -1 } },
-                    { new: true }
-                );
-                if (updatedPintu.kuota < 0) {
                     const getAllPintu = await MejaRegistrasiModel.find({
-                        kuota: { $gt: 0 }
-                    }).sort({ code: 1 }).limit(1);
+                        kuota: { $gt: 0 },
+                    })
+                        .sort({ code: 1 })
+                        .limit(1);
 
                     if (getAllPintu.length > 0) {
                         const noKursiTerakhirBaru = await Orangtua.find({
                             $and: [
                                 { noKursi: { $exists: true } },
-                                { noKursi: { $regex: `^${getAllPintu[0].code}` } }
-                            ]
-                        }).sort({ noKursi: -1 }).limit(1);
+                                { noKursi: { $regex: `^${getAllPintu[0].code}`} },
+                            ],
+                        })
+                            .sort({ noKursi: -1 })
+                            .limit(1);
 
                         if (noKursiTerakhirBaru.length > 0) {
                             let hasilBaru = noKursiTerakhirBaru[0].noKursi.slice(2);
@@ -76,9 +82,12 @@ export const updateScan = async (req, res) => {
                             setPintu = `${getAllPintu[0].code}1`;
                         }
 
-                        await MejaRegistrasiModel.findByIdAndUpdate(getAllPintu[0]._id, { $inc: { kuota: -1 } });
+                        // Update kuota di meja baru
+                        await MejaRegistrasiModel.findByIdAndUpdate(getAllPintu[0]._id, {
+                            $inc: { kuota: -1 },
+                        });
                     } else {
-                        return res.status(400).send('Semua meja sudah penuh.');
+                        return res.status(400).json({message : "Semua meja sudah penuh."});
                     }
                 }
             }
@@ -88,17 +97,21 @@ export const updateScan = async (req, res) => {
                 {
                     isRegis: true,
                     noKursi: setPintu,
-                    isRegisBy: req.user.userId
+                    isRegisBy: req.user.userId,
                 },
                 { new: true }
             );
 
-            if (updatedOrangtua && updatedOrangtua.isRegis && req.enabledFeatures.Konsumsi) {
+            if (
+                updatedOrangtua &&
+                updatedOrangtua.isRegis &&
+                req.enabledFeatures.Konsumsi
+            ) {
                 await updateKonsumsi(req, res);
             }
 
             updatedData = updatedOrangtua;
-            message = 'Orangtua';
+            message = "Orangtua";
         }
 
         if (!updatedData) {
