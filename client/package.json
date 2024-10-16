@@ -21,6 +21,7 @@
     "dayjs": "^1.11.7",
     "dotenv": "^16.4.5",
     "html5-qrcode": "^2.3.8",
+    "lodash": "^4.17.21",
     "pusher-js": "^8.4.0-rc2",
     "qr-scanner": "^1.4.2",
     "react": "^18.2.0",

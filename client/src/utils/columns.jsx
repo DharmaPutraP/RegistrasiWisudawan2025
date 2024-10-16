@@ -2,12 +2,14 @@
 
 import { IoCloseCircle } from "react-icons/io5";
 import { FaCheckCircle } from "react-icons/fa";
-import { Registered, Confirm } from "../components";
+import { Registered, Confirm, FormRow } from "../components";
 import Konsumsied from "../components/Konsumsied";
 import ToggleButton from "../components/SlideOnOff";
 import QRCodeCell from "../components/QRcodeCell";
-import { deleteMeja } from "../service/Meja.service";
+import { deleteMeja, updateMeja } from "../service/Meja.service";
 import { toast } from "react-toastify";
+import { useCallback } from "react";
+import { debounce } from 'lodash';
 
 export const getMahasiswaColumns = (navigate) => [
   {
@@ -144,7 +146,7 @@ export const getOrangtuaColumns = (navigate) => [
     cell: (row) => {
       const mejaId = localStorage.getItem("tableId");
       console.log(mejaId);
-      
+
       return row.isRegis ? (
         <button
           className="btn regis-btn"
@@ -235,8 +237,45 @@ export const getColumnsMejas = (
     sortable: true,
   },
   {
+    name: "Kode",
+    selector: (row) => row.code,
+    sortable: true,
+  },
+  {
     name: "Nama",
     selector: (row) => row.name,
+    sortable: true,
+  },
+  {
+    name: "Kuota",
+    selector: (row) => {
+      // Create a debounced function to update 'meja'
+      const debouncedUpdateMeja = useCallback(
+        debounce(async (id, value) => {
+          try {
+            await updateMeja(id, { kuota: value });
+            toast.success("Kuota meja berhasil ditambahkan!");
+          } catch (error) {
+            toast.error("Gagal menambah kuota meja.");
+          }
+        }, 1000),
+        []
+      );
+
+      return (
+        <div>
+          <FormRow
+            type="text"
+            name="meja"
+            defaultValue={row.kuota}
+            onChange={(e) => {
+              const value = e.target.value;
+              debouncedUpdateMeja(row._id, value); // Call the debounced function
+            }}
+          />
+        </div>
+      );
+    },
     sortable: true,
   },
   {
