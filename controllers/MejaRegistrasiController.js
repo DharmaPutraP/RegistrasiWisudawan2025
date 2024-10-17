@@ -61,8 +61,9 @@ export const getMeja = async (req, res) => {
 }
 
 export const updateMeja = async (req, res) => {
+    const {name,code, kuota, tersedia } = req.body
     try {
-        const meja = await Meja.findByIdAndUpdate(req.params.id, { name: req.body.name, updatedBy: req.user.userId }, {
+        const meja = await Meja.findByIdAndUpdate(req.params.id, { name: name, code: code, kuota: kuota, tersedia: tersedia, updatedBy: req.user.userId }, {
             new: true,
         });
         res.status(StatusCodes.OK).json({ meja });

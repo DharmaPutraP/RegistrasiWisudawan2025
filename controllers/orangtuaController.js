@@ -157,47 +157,55 @@ export const updateOrangtuaRegister = async (req, res) => {
             isRegis = false;
         }
 
-        console.log(req.params);
-        const mejaId = req.params.mejaId
+        const mejaId = req.params.mejaId;
         const getPintu = await MejaRegistrasiModel.findById(mejaId);
 
         if (!getPintu) {
-            return res.status(404).json({ message : "Meja tidak ditemukan."});
+            return res.status(404).json({ message: "Meja tidak ditemukan." });
         }
 
         const orangtua = await Orangtua.findById(req.params.id);
 
         if (!orangtua) {
-            return res.status(404).json({ message : "Orangtua tidak ditemukan."});
+            return res.status(404).json({ message: "Orangtua tidak ditemukan." });
         }
 
         let setPintu = orangtua.noKursi;
 
-        if (!orangtua.noKursi) {
+        // Jika noKursi belum di-set, set nomor baru
+        if (!orangtua.noKursi && orangtua.isRegis == false) {
             if (getPintu.kuota > 0) {
-                const noKursiTerakhirOrangtua = await Orangtua.find({
-                    $and: [
-                        { noKursi: { $exists: true } },
-                        { noKursi: { $regex: `^${getPintu.code}` } },
-                    ],
-                })
-                    .sort({ noKursi: -1 })
-                    .limit(1);
+                // Cari semua nomor kursi yang sudah di-assign dengan kode meja yang sama (tanpa sorting dari MongoDB)
+                const noKursiOrangtua = await Orangtua.find({
+                    noKursi: { $regex: `^${getPintu.code}` },
+                });
 
-                if (noKursiTerakhirOrangtua.length > 0) {
-                    let hasil = noKursiTerakhirOrangtua[0].noKursi.slice(2);
-                    setPintu = `${getPintu.code}${parseInt(hasil) + 1}`;
+                // Sorting hasil query di sisi JavaScript berdasarkan bagian numerik
+                const sortedNoKursiOrangtua = noKursiOrangtua.sort((a, b) => {
+                    const aNum = parseInt(a.noKursi.slice(getPintu.code.length), 10);
+                    const bNum = parseInt(b.noKursi.slice(getPintu.code.length), 10);
+                    return bNum - aNum;
+                });
+// console.log(sortedNoKursiOrangtua);
+
+//                 return 
+                // Jika ada nomor kursi terakhir, tambah 1 untuk mendapatkan nomor baru
+                if (sortedNoKursiOrangtua.length > 0) {
+                    let nomorTerakhir = sortedNoKursiOrangtua[0].noKursi.slice(getPintu.code.length); // Ambil bagian nomor saja
+                    setPintu = `${getPintu.code}${parseInt(nomorTerakhir, 10) + 1}`;
                 } else {
-                    setPintu = `${getPintu.code}1`;
+                    setPintu = `${getPintu.code}1`; // Jika belum ada kursi, mulai dari 1
                 }
 
+
+                // Kurangi kuota meja yang dipilih
                 await MejaRegistrasiModel.findByIdAndUpdate(
                     mejaId,
                     { $inc: { kuota: -1 } },
                     { new: true }
                 );
-
             } else {
+                // Jika kuota meja penuh, cari meja lain yang masih ada kuota
                 const getAllPintu = await MejaRegistrasiModel.find({
                     kuota: { $gt: 0 },
                 })
@@ -205,18 +213,20 @@ export const updateOrangtuaRegister = async (req, res) => {
                     .limit(1);
 
                 if (getAllPintu.length > 0) {
-                    const noKursiTerakhirBaru = await Orangtua.find({
-                        $and: [
-                            { noKursi: { $exists: true } },
-                            { noKursi: { $regex: `^${getAllPintu[0].code}` } },
-                        ],
-                    })
-                        .sort({ noKursi: -1 })
-                        .limit(1);
+                    const noKursiOrangtuaBaru = await Orangtua.find({
+                        noKursi: { $regex: `^${getAllPintu[0].code}` },
+                    });
 
-                    if (noKursiTerakhirBaru.length > 0) {
-                        let hasilBaru = noKursiTerakhirBaru[0].noKursi.slice(2);
-                        setPintu = `${getAllPintu[0].code}${parseInt(hasilBaru) + 1}`;
+                    // Sorting berdasarkan bagian numerik
+                    const sortedNoKursiOrangtuaBaru = noKursiOrangtuaBaru.sort((a, b) => {
+                        const aNum = parseInt(a.noKursi.slice(getAllPintu[0].code.length), 10);
+                        const bNum = parseInt(b.noKursi.slice(getAllPintu[0].code.length), 10);
+                        return bNum - aNum;
+                    });
+
+                    if (sortedNoKursiOrangtuaBaru.length > 0) {
+                        let nomorTerakhirBaru = sortedNoKursiOrangtuaBaru[0].noKursi.slice(getAllPintu[0].code.length);
+                        setPintu = `${getAllPintu[0].code}${parseInt(nomorTerakhirBaru, 10) + 1}`;
                     } else {
                         setPintu = `${getAllPintu[0].code}1`;
                     }
@@ -231,22 +241,17 @@ export const updateOrangtuaRegister = async (req, res) => {
             }
         }
 
+        // Update data orangtua dengan noKursi yang sudah di-set
         const updatedOrangtua = await Orangtua.findByIdAndUpdate(
             req.params.id,
             {
-                isRegis: true,
+                isRegis: isRegis,
                 noKursi: setPintu,
                 isRegisBy: req.user.userId,
             },
             { new: true }
         );
 
-
-        // return
-
-        // const updatedOrangtua = await Orangtua.findByIdAndUpdate(req.params.id, { isRegis: isRegis, isRegisBy: req.user.userId }, {
-        //     new: true,
-        // });
         res.status(StatusCodes.OK).json({ msg: 'Orangtua Registered modified', orangtua: updatedOrangtua });
     } catch (error) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message });

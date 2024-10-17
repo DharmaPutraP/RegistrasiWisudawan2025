@@ -37,57 +37,68 @@ export const updateScan = async (req, res) => {
 
             if (!orangtua.noKursi) {
                 if (getPintu.kuota > 0) {
-                    const noKursiTerakhirOrangtua = await Orangtua.find({
-                        $and: [
-                            { noKursi: { $exists: true } },
-                            { noKursi: { $regex: `^${getPintu.code}`} },
-                        ],
-                    })
-                        .sort({ noKursi: -1 })
-                        .limit(1);
-
-                    if (noKursiTerakhirOrangtua.length > 0) {
-                        let hasil = noKursiTerakhirOrangtua[0].noKursi.slice(2);
-                        setPintu = `${getPintu.code}${parseInt(hasil) + 1}`;
+                    // Cari semua nomor kursi yang sudah di-assign dengan kode meja yang sama (tanpa sorting dari MongoDB)
+                    const noKursiOrangtua = await Orangtua.find({
+                        noKursi: { $regex: `^${getPintu.code}` },
+                    });
+    
+                    // Sorting hasil query di sisi JavaScript berdasarkan bagian numerik
+                    const sortedNoKursiOrangtua = noKursiOrangtua.sort((a, b) => {
+                        const aNum = parseInt(a.noKursi.slice(getPintu.code.length), 10);
+                        const bNum = parseInt(b.noKursi.slice(getPintu.code.length), 10);
+                        return bNum - aNum;
+                    });
+    // console.log(sortedNoKursiOrangtua);
+    
+    //                 return 
+                    // Jika ada nomor kursi terakhir, tambah 1 untuk mendapatkan nomor baru
+                    if (sortedNoKursiOrangtua.length > 0) {
+                        let nomorTerakhir = sortedNoKursiOrangtua[0].noKursi.slice(getPintu.code.length); // Ambil bagian nomor saja
+                        setPintu = `${getPintu.code}${parseInt(nomorTerakhir, 10) + 1}`;
                     } else {
-                        setPintu = `${getPintu.code}1`;
+                        setPintu = `${getPintu.code}1`; // Jika belum ada kursi, mulai dari 1
                     }
-
+    
+    
+                    // Kurangi kuota meja yang dipilih
                     await MejaRegistrasiModel.findByIdAndUpdate(
-                        req.body.mejaId,
+                        mejaId,
                         { $inc: { kuota: -1 } },
                         { new: true }
                     );
                 } else {
+                    // Jika kuota meja penuh, cari meja lain yang masih ada kuota
                     const getAllPintu = await MejaRegistrasiModel.find({
                         kuota: { $gt: 0 },
                     })
                         .sort({ code: 1 })
                         .limit(1);
-
+    
                     if (getAllPintu.length > 0) {
-                        const noKursiTerakhirBaru = await Orangtua.find({
-                            $and: [
-                                { noKursi: { $exists: true } },
-                                { noKursi: { $regex: `^${getAllPintu[0].code}`} },
-                            ],
-                        })
-                            .sort({ noKursi: -1 })
-                            .limit(1);
-
-                        if (noKursiTerakhirBaru.length > 0) {
-                            let hasilBaru = noKursiTerakhirBaru[0].noKursi.slice(2);
-                            setPintu = `${getAllPintu[0].code}${parseInt(hasilBaru) + 1}`;
+                        const noKursiOrangtuaBaru = await Orangtua.find({
+                            noKursi: { $regex: `^${getAllPintu[0].code}` },
+                        });
+    
+                        // Sorting berdasarkan bagian numerik
+                        const sortedNoKursiOrangtuaBaru = noKursiOrangtuaBaru.sort((a, b) => {
+                            const aNum = parseInt(a.noKursi.slice(getAllPintu[0].code.length), 10);
+                            const bNum = parseInt(b.noKursi.slice(getAllPintu[0].code.length), 10);
+                            return bNum - aNum;
+                        });
+    
+                        if (sortedNoKursiOrangtuaBaru.length > 0) {
+                            let nomorTerakhirBaru = sortedNoKursiOrangtuaBaru[0].noKursi.slice(getAllPintu[0].code.length);
+                            setPintu = `${getAllPintu[0].code}${parseInt(nomorTerakhirBaru, 10) + 1}`;
                         } else {
                             setPintu = `${getAllPintu[0].code}1`;
                         }
-
+    
                         // Update kuota di meja baru
                         await MejaRegistrasiModel.findByIdAndUpdate(getAllPintu[0]._id, {
                             $inc: { kuota: -1 },
                         });
                     } else {
-                        return res.status(400).json({message : "Semua meja sudah penuh."});
+                        return res.status(400).json({ message: "Semua meja sudah penuh." });
                     }
                 }
             }
