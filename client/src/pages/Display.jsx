@@ -83,10 +83,11 @@ const Display = () => {
         </div>
         {showDisplay && dataScan && (
           <>
-          <p className="displayName">Orang Tua</p>
-          <p className="displayName">{formatName(dataScan.data.name)}</p>
-          <br />
-          <p className="displayName">No Kursi anda : {dataScan.data?.noKursi}</p>
+            <p className="displayName">Orang Tua</p>
+            <p className="displayName">{formatName(dataScan.data.name)}</p>
+            <p className="displayName">
+              No Kursi : {dataScan.data?.noKursi}
+            </p>
           </>
         )}
         {/* <p className="displayName">Dharma Putra Prataam</p> */}

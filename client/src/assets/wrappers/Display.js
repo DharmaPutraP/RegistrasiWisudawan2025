@@ -18,7 +18,7 @@ const Wrapper = styled.aside`
 
   .overlay-text {
     position: absolute;
-    top: 30%;
+    top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
@@ -64,7 +64,8 @@ const Wrapper = styled.aside`
   .displayName {
     font-family: "Cormorant Garamond", serif;
     font-weight: 700;
-    font-size: 4.3rem;
+    color: #3955af;
+    font-size: 4rem;
   }
   @media (min-width: 769px) {
     h2 {
@@ -107,6 +108,6 @@ const Wrapper = styled.aside`
 //       width: 10rem;
 //       right: -11rem;
 //     }
-  }
+  /* } */
 `;
 export default Wrapper;

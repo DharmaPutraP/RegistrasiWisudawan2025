@@ -132,16 +132,20 @@ export const updateOrangtua = async (req, res) => {
 
 export const updateOrangtuaKonsumsi = async (req, res) => {
     try {
-        let isKonsumsi = true;
-        const konsumsiOrangtua = await Orangtua.findById(req.params.id);
-        if (konsumsiOrangtua.isKonsumsi) {
-            isKonsumsi = false;
+        if (req.enabledFeatures.Konsumsi) {
+            let isKonsumsi = true;
+            const konsumsiOrangtua = await Orangtua.findById(req.params.id);
+            if (konsumsiOrangtua.isKonsumsi) {
+                isKonsumsi = false;
+            }
+    
+            const updatedOrangtua = await Orangtua.findByIdAndUpdate(req.params.id, { isKonsumsi: isKonsumsi, isKonsumsiBy: req.user.userId }, {
+                new: true,
+            });
+            res.status(StatusCodes.OK).json({ msg: 'Orangtua Konsumsied modified', orangtua: updatedOrangtua });
+        }else{
+            res.status(StatusCodes.NOT_ACCEPTABLE).json({ message: "Pengambilan Konsumsi ditutup!" });
         }
-
-        const updatedOrangtua = await Orangtua.findByIdAndUpdate(req.params.id, { isKonsumsi: isKonsumsi, isKonsumsiBy: req.user.userId }, {
-            new: true,
-        });
-        res.status(StatusCodes.OK).json({ msg: 'Orangtua Konsumsied modified', orangtua: updatedOrangtua });
     } catch (error) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message });
     }
@@ -149,6 +153,10 @@ export const updateOrangtuaKonsumsi = async (req, res) => {
 
 export const updateOrangtuaRegister = async (req, res) => {
     try {
+
+        if (!req.enabledFeatures.Registrasi) {
+            return res.status(StatusCodes.NOT_ACCEPTABLE).json({ message: "Registrasi ditutup!" });
+        }
         let isRegis = true;
         const protocolLength = req.headers.referer.startsWith("https://") ? 8 : 7;
         const urlAfterProtocol = req.headers.referer.substring(protocolLength);

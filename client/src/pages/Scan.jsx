@@ -68,9 +68,10 @@ const Scan = () => {
       const userRegisterData = await fetchDataById(decodedText);
       setLoadedData(userRegisterData);
       setShowData(true);
-      toast.success("Berhasil Registrasi");
-      // new Audio(Yay).play();
       setTimeout(() => setShowData(false), 4000);
+      if (userRegisterData.message == "Mahasiswa" || userRegisterData.message == "Orangtua" && userRegisterData.data.isRegis === true) {
+        toast.success("Berhasil Registrasi");
+      }
       return data;
     } catch (error) {
       new Audio(Fail).play();
@@ -112,7 +113,7 @@ const Scan = () => {
 
       const { isRegis, isKonsumsi } = dataRegistered.data;
 
-      if (Registrasi) {
+      if (Registrasi || Konsumsi) {
         if (isRegis && isKonsumsi) {
           toast.error(
             "Anda telah melakukan registrasi dan mengambil konsumsi!"
@@ -132,7 +133,6 @@ const Scan = () => {
           new Audio(Fail).play();
         } else {
           await registerUser(decodedText, selectedMeja);
-         
         }
       } else {
         toast.error("Registrasi ditutup!");

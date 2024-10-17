@@ -16,6 +16,7 @@ import {
 } from "../controllers/orangtuaController.js";
 import upload from "../middleware/multerMiddleware.js";
 import { authorizedPermissions } from "../middleware/authMiddleware.js";
+import { checkFeatureEnabled } from "../middleware/featureSettingsMidddleware.js";
 // import { validateJobInput, validateIdParam } from '../middleware/validationMiddleware.js';
 // import { checkForTestUser } from '../middleware/authMiddleware.js';
 
@@ -39,14 +40,14 @@ router
   .patch(updateOrangtua)
   .delete(deleteOrangtua);
 
-  
-  router
-  .route("/konsumsi/:id")
-  .patch(authorizedPermissions("superadmin", "admin"), updateOrangtuaKonsumsi);
-  
-  router
-    .route("/sudah/:id/:mejaId")
-    .get(getOrangtua)
-    .patch(authorizedPermissions("superadmin", "admin"), updateOrangtuaRegister);
 
-    export default router;
+router
+  .route("/konsumsi/:id")
+  .patch(authorizedPermissions("superadmin", "admin"), checkFeatureEnabled(['Konsumsi']), updateOrangtuaKonsumsi);
+
+router
+  .route("/sudah/:id/:mejaId")
+  .get(getOrangtua)
+  .patch(authorizedPermissions("superadmin", "admin"), checkFeatureEnabled(['Registrasi']), updateOrangtuaRegister);
+
+export default router;

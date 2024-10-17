@@ -14,6 +14,7 @@ import {
 } from "../controllers/mahasiswaController.js";
 import upload from "../middleware/multerMiddleware.js";
 import { authorizedPermissions } from "../middleware/authMiddleware.js";
+import { checkFeatureEnabled } from "../middleware/featureSettingsMidddleware.js";
 // import { validateJobInput, validateIdParam } from '../middleware/validationMiddleware.js';
 // import { checkForTestUser } from '../middleware/authMiddleware.js';
 
@@ -41,6 +42,6 @@ router
 router
   .route("/sudah/:id")
   .get(getMahasiswa)
-  .patch(authorizedPermissions("superadmin", "admin"), updateMahasiswaRegister);
+  .patch(authorizedPermissions("superadmin", "admin"), checkFeatureEnabled(['Registrasi']), updateMahasiswaRegister);
 
 export default router;

@@ -126,19 +126,24 @@ export const updateMahasiswa = async (req, res) => {
 };
 
 export const updateMahasiswaRegister = async (req, res) => {
-    try {
-        let isRegis = true;
-        const protocolLength = req.headers.referer.startsWith("https://") ? 8 : 7;
-        const urlAfterProtocol = req.headers.referer.substring(protocolLength);
+    try {        
+        if (req.enabledFeatures.Registrasi) {
+            let isRegis = true;
+            const protocolLength = req.headers.referer.startsWith("https://") ? 8 : 7;
+            const urlAfterProtocol = req.headers.referer.substring(protocolLength);
 
-        if (urlAfterProtocol.includes("isRegis=true")) {
-            isRegis = false;
+            if (urlAfterProtocol.includes("isRegis=true")) {
+                isRegis = false;
+            }
+
+            const updatedMahasiswa = await Mahasiswa.findByIdAndUpdate(req.params.id, { isRegis: isRegis, isRegisBy: req.user.userId }, {
+                new: true,
+            });
+            res.status(StatusCodes.OK).json({ msg: 'Mahasiswa Registered modified', mahasiswa: updatedMahasiswa });
+        }else{
+            res.status(StatusCodes.NOT_ACCEPTABLE).json({ message: "Registrasi Tidak Diizinkan" });
         }
 
-        const updatedMahasiswa = await Mahasiswa.findByIdAndUpdate(req.params.id, { isRegis: isRegis, isRegisBy: req.user.userId }, {
-            new: true,
-        });
-        res.status(StatusCodes.OK).json({ msg: 'Mahasiswa Registered modified', mahasiswa: updatedMahasiswa });
     } catch (error) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message });
     }
@@ -199,17 +204,17 @@ export const showStats = async (req, res) => {
             if (Object.values(PRODI).includes(mahasiswa.prodi) && mahasiswa.isRegis) {
                 // Tambahkan jika mahasiswa terdaftar pada prodi tersebut
                 Registered[mahasiswa.prodi] += 1;
-                
+
             } else if (Object.values(PRODI).includes(mahasiswa.prodi) && !mahasiswa.isRegis) {
                 UnRegistered[mahasiswa.prodi] += 1;
             }
         });
         // console.log(Registered);
-        
+
 
         Object.values(PRODI).forEach((prodi) => {
             // console.log(Registered[prodi]);
-            
+
             obj = {
                 name: prodi,
                 registered: Registered[prodi],
@@ -310,21 +315,21 @@ export const importDataMhs = async (req, res) => {
                 formattedSeatNumber = letterPart + '.' + formattedNumberPart;
             } else {
                 console.error('Nomor kursi tidak valid.');
-                continue; 
+                continue;
             }
 
             let prodi = item.prodi.replace("-", "")
-            .replace(/\s+/g, " ")
-            .trim()
-            .toUpperCase();
+                .replace(/\s+/g, " ")
+                .trim()
+                .toUpperCase();
 
             if (item.jurusan === "Akuntansi Perpajakan") {
                 jurusan = item.jurusan.replace("Akuntansi Perpajakan", "AKTP")
-            }else if (item.jurusan === "Teknik Industri") {
+            } else if (item.jurusan === "Teknik Industri") {
                 jurusan = item.jurusan.replace("Teknik Industri", "JTIN")
-            }else if(item.jurusan === "Teknologi Informasi") {
-                jurusan = item.jurusan.replace("Teknologi Informasi", "JTI")
-            }else{
+            } else if (item.jurusan === "Teknologi Informasi") {
+                jurusanMAHAS = item.jurusan.replace("Teknologi Informasi", "JTI")
+            } else {
                 console.log("jurusan tidak ditemukan");
             }
 
