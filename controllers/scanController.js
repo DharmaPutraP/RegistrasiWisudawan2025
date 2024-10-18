@@ -13,7 +13,17 @@ export const updateScan = async (req, res) => {
         let updatedData;
         let message;
         if (!req.enabledFeatures.Registrasi) {
-            return res.status(StatusCodes.NOT_ACCEPTABLE).json({ message: "Registrasi Tidak Diizinkan" });
+            if (req.enabledFeatures.Konsumsi) {
+                // Jika fitur Konsumsi diaktifkan
+                await updateKonsumsi(req, res);
+                return;
+            } else {
+                // Jika fitur Konsumsi dinonaktifkan
+                return res.status(StatusCodes.NOT_ACCEPTABLE).json({ 
+                    message: "Pengambilan Konsumsi Tidak Diizinkan!" 
+                });
+            }
+            return res.status(StatusCodes.NOT_ACCEPTABLE).json({ message: "Registrasi Tidak Diizinkan!" });
         }
 
         const updatedMahasiswa = await Mahasiswa.findByIdAndUpdate(req.params.id, { isRegis: isRegis, isRegisBy: req.user.userId }, {
