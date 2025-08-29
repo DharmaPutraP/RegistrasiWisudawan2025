@@ -11,7 +11,9 @@ import {
   importDataMhs,
   exportPdfDataMhs,
   showStats,
+  sendEmailToMahasiswa,
 } from "../controllers/mahasiswaController.js";
+
 import upload from "../middleware/multerMiddleware.js";
 import { authorizedPermissions } from "../middleware/authMiddleware.js";
 import { checkFeatureEnabled } from "../middleware/featureSettingsMidddleware.js";
@@ -42,6 +44,14 @@ router
 router
   .route("/sudah/:id")
   .get(getMahasiswa)
-  .patch(authorizedPermissions("superadmin", "admin"), checkFeatureEnabled(['Registrasi']), updateMahasiswaRegister);
-
+  .patch(
+    authorizedPermissions("superadmin", "admin"),
+    checkFeatureEnabled(["Registrasi"]),
+    updateMahasiswaRegister
+  );
+router.post(
+  "/send-email",
+  authorizedPermissions("superadmin", "admin"),
+  sendEmailToMahasiswa
+);
 export default router;

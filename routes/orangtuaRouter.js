@@ -40,14 +40,21 @@ router
   .patch(updateOrangtua)
   .delete(deleteOrangtua);
 
-
 router
   .route("/konsumsi/:id")
-  .patch(authorizedPermissions("superadmin", "admin"), checkFeatureEnabled(['Konsumsi']), updateOrangtuaKonsumsi);
+  .patch(
+    authorizedPermissions("superadmin", "admin"),
+    checkFeatureEnabled(["Konsumsi"]),
+    updateOrangtuaKonsumsi
+  );
 
 router
   .route("/sudah/:id/:mejaId")
   .get(getOrangtua)
-  .patch(authorizedPermissions("superadmin", "admin"), checkFeatureEnabled(['Registrasi']), updateOrangtuaRegister);
+  .patch(
+    authorizedPermissions("superadmin", "admin"),
+    checkFeatureEnabled(["Registrasi"]),
+    updateOrangtuaRegister
+  );
 
 export default router;

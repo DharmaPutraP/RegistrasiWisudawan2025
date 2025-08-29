@@ -31,25 +31,25 @@ const Scan = () => {
   const [decodedText, setDecodedText] = useState(null);
   const [loadedData, setLoadedData] = useState(null);
   const [showData, setShowData] = useState(false);
-  const [selectedMeja, setSelectedMeja] = useState(
-    localStorage.getItem("tableId") || ""
-  );
-  const [mejas, setMeja] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(!selectedMeja);
+  // const [selectedMeja, setSelectedMeja] = useState(
+  //   localStorage.getItem("tableId") || ""
+  // );
+  // const [mejas, setMeja] = useState([]);
+  // const [isModalOpen, setIsModalOpen] = useState(!selectedMeja);
   const [lastScannedQR, setLastScannedQR] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const { Konsumsi, Registrasi } = settings;
 
   // Fetch Meja List
-  const fetchMejas = async () => {
-    try {
-      const { data } = await customFetch.get("settings/meja");
-      setMeja(data.data || []);
-    } catch (error) {
-      toast.error("Gagal mengambil data meja");
-    }
-  };
+  // const fetchMejas = async () => {
+  //   try {
+  //     const { data } = await customFetch.get("settings/meja");
+  //     setMeja(data.data || []);
+  //   } catch (error) {
+  //     toast.error("Gagal mengambil data meja");
+  //   }
+  // };
 
   // Fetch Data by ID (Mahasiswa/Orangtua)
   const fetchDataById = async (id) => {
@@ -69,7 +69,11 @@ const Scan = () => {
       setLoadedData(userRegisterData);
       setShowData(true);
       setTimeout(() => setShowData(false), 4000);
-      if (userRegisterData.message == "Mahasiswa" || userRegisterData.message == "Orangtua" && userRegisterData.data.isRegis === true) {
+      if (
+        userRegisterData.message == "Mahasiswa" ||
+        (userRegisterData.message == "Orangtua" &&
+          userRegisterData.data.isRegis === true)
+      ) {
         toast.success("Berhasil Registrasi");
       }
       return data;
@@ -80,17 +84,17 @@ const Scan = () => {
   };
 
   // Handle Table Selection
-  const handleTableSelection = (event) => {
-    const mejaId = event.target.value;
-    localStorage.setItem("tableId", mejaId);
-    setSelectedMeja(mejaId);
-    setIsModalOpen(false);
-  };
+  // const handleTableSelection = (event) => {
+  //   const mejaId = event.target.value;
+  //   localStorage.setItem("tableId", mejaId);
+  //   setSelectedMeja(mejaId);
+  //   setIsModalOpen(false);
+  // };
 
-  const handleDeleteMeja = () => {
-    localStorage.removeItem("tableId");
-    setIsModalOpen(true);
-  };
+  // const handleDeleteMeja = () => {
+  //   localStorage.removeItem("tableId");
+  //   setIsModalOpen(true);
+  // };
 
   useEffect(() => {
     const handleScanResult = async () => {
@@ -125,14 +129,16 @@ const Scan = () => {
           !isKonsumsi &&
           dataRegistered.message != "Mahasiswa"
         ) {
-          await registerUser(decodedText, selectedMeja);
+          // await registerUser(decodedText, selectedMeja);
+          await registerUser(decodedText);
           toast.success("Anda berhasil mengambil konsumsi!");
           // new Audio(Yay).play();
         } else if (isRegis) {
           toast.error("Anda telah melakukan registrasi!");
           new Audio(Fail).play();
         } else {
-          await registerUser(decodedText, selectedMeja);
+          // await registerUser(decodedText, selectedMeja);
+          await registerUser(decodedText);
         }
       } else {
         toast.error("Registrasi ditutup!");
@@ -148,15 +154,13 @@ const Scan = () => {
     handleScanResult();
   }, [decodedText]);
 
-  useEffect(() => {
-    fetchMejas();
-  }, []);
-
-  // console.log(settings);
+  // useEffect(() => {
+  //   fetchMejas();
+  // }, []);
 
   return (
     <Wrapper>
-      <Modal isOpen={isModalOpen}>
+      {/* <Modal isOpen={isModalOpen}>
         <div>
           <label htmlFor="Pilih Meja" className="form-label">
             Pilih Meja
@@ -174,7 +178,7 @@ const Scan = () => {
             ))}
           </select>
         </div>
-      </Modal>
+      </Modal> */}
       <div className="form">
         <div className="jarak" style={{ marginBottom: "2rem" }}>
           <h5>Scan QR Code Anda</h5>
@@ -184,9 +188,9 @@ const Scan = () => {
           >
             Display Registrasi
           </button>
-          <button className="btn btn-secondary" onClick={handleDeleteMeja}>
+          {/* <button className="btn btn-secondary" onClick={handleDeleteMeja}>
             Ganti Meja
-          </button>
+          </button> */}
         </div>
         <Container>
           <Html5QrcodePlugin

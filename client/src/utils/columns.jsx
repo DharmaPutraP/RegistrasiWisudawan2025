@@ -145,7 +145,7 @@ export const getOrangtuaColumns = (navigate) => [
     name: "Registrasi",
     cell: (row) => {
       const mejaId = localStorage.getItem("tableId");
-      console.log(mejaId);
+      // console.log(mejaId);
 
       return row.isRegis ? (
         <button

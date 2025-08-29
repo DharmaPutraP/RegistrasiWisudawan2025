@@ -2,6 +2,7 @@ import TabelContainer from "../../assets/wrappers/Tabel";
 import Meja from "./Meja";
 import ActivationFeatures from "./ActivationFeature";
 import UserSettings from "./UserSettings";
+import SendEmail from "./SendEmail";
 
 const Settings = () => {
   return (
@@ -11,6 +12,8 @@ const Settings = () => {
       <ActivationFeatures />
       <hr />
       <Meja />
+      <hr />
+      <SendEmail />
     </TabelContainer>
   );
 };

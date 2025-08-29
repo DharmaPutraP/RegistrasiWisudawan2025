@@ -32,7 +32,6 @@
     "react-toastify": "^9.1.2",
     "recharts": "^2.12.7",
     "socket.io-client": "^4.7.5",
-    "styled-components": "^5.3.10",
     "sweetalert2": "^11.10.7"
   },
   "devDependencies": {

@@ -9,6 +9,7 @@ import customFetch from "../../utils/customFetch";
 import { useLoaderData } from "react-router-dom";
 import { useContext, createContext } from "react";
 import TabelContainer from "../../assets/wrappers/Tabel";
+import { useSettingsContext } from "../../pages/settings/SettingsContext";
 
 const AllMahasiswasContext = createContext();
 
@@ -30,17 +31,20 @@ export const loader = async ({ request }) => {
 
 const Mahasiswa = () => {
   const { data, searchValues } = useLoaderData();
-  
+
+  const { settings } = useSettingsContext();
+  const { Email } = settings;
+
   return (
     <AllMahasiswasContext.Provider value={{ data, searchValues }}>
       {/* <Tab /> */}
       <TabelContainer>
-        <LabelButton title={"Mahasiswa" } linkUrl={"../mahasiswa/tambah-mahasiswa"}/>
-         <SearchContainer
-          context={searchValues}
-          formTitle="Cari Mahasiswa"
+        <LabelButton
+          title={"Mahasiswa"}
+          linkUrl={"../mahasiswa/tambah-mahasiswa"}
         />
-       <Table titleTable={"Seluruh Mahasiswa"} context={data}/>
+        <SearchContainer context={searchValues} formTitle="Cari Mahasiswa" />
+        <Table titleTable={"Seluruh Mahasiswa"} context={data} />
       </TabelContainer>
     </AllMahasiswasContext.Provider>
   );

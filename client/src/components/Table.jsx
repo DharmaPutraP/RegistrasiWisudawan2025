@@ -7,15 +7,16 @@ import {
   getOrangtuaColumns,
   getColumnsUsers,
 } from "../utils/columns";
-import { BiExport } from "react-icons/bi";
+import { BiExport, BiSend } from "react-icons/bi";
 import customFetch from "../utils/customFetch";
+import { toast } from "react-toastify";
 
 export const checkDefaultTheme = () => {
   const isDarkThemes = localStorage.getItem("darkTheme") === "true";
   return isDarkThemes === true ? "dark" : "default";
 };
 
-const Table = ({ titleTable, context }) => {
+const Table = ({ titleTable, context, email = false }) => {
   const { isDarkTheme } = useDashboardContext();
   const { search, pathname } = useLocation();
   const navigate = useNavigate();
@@ -54,13 +55,30 @@ const Table = ({ titleTable, context }) => {
         responseType: "blob",
       });
 
+      console.log(response);
+
       const blob = new Blob([response.data], { type: response.data.type });
+      console.log(blob);
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
       link.download = `${linkUrl}.pdf`;
       link.click();
     } catch (error) {
       console.error("Error exporting PDF:", error);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      const response = await customFetch.post("mahasiswa/send-email");
+      if (response.data && response.data.success) {
+        toast.success("Email berhasil dikirim ke seluruh mahasiswa.");
+      } else {
+        toast.error("Gagal mengirim email ke mahasiswa.");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan saat mengirim email ke mahasiswa.");
+      console.error(error);
     }
   };
 
@@ -81,6 +99,17 @@ const Table = ({ titleTable, context }) => {
         actions={
           linkUrl == "admin" ? (
             ""
+          ) : linkUrl == "mahasiswa" ? (
+            <>
+              <button type="button" className="btn" onClick={handleExportPDF}>
+                <BiExport size={15} style={{ marginRight: "0.3rem" }} /> Export
+                PDF
+              </button>
+              <button type="button" className="btn" onClick={handleSendEmail}>
+                <BiSend size={15} style={{ marginRight: "0.4rem" }} />
+                Kirim Email
+              </button>
+            </>
           ) : (
             <button type="button" className="btn" onClick={handleExportPDF}>
               <BiExport size={15} style={{ marginRight: "0.3rem" }} /> Export
